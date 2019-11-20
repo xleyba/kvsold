@@ -3,59 +3,42 @@ extern crate clap;
 use clap::{App, Arg, SubCommand};
 use structopt::StructOpt;
 
-use std::process::exit;
 use std::path::PathBuf;
+use std::process::exit;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "git", about = "the stupid content tracker")]
 enum Opt {
     #[structopt(name = "set")]
     Set {
-        #[structopt(
-            value_name = "KEY",
-            help = "The key to insert."
-        )]
+        #[structopt(value_name = "KEY", help = "The key to insert.")]
         key: String,
-        #[structopt(
-            value_name = "VALUE",
-            help = "The value to insert."
-        )]
-        value: String
+        #[structopt(value_name = "VALUE", help = "The value to insert.")]
+        value: String,
     },
-    #[structopt(name = "get", about="store a value for a key")]
+    #[structopt(name = "get", about = "store a value for a key")]
     Get {
-        #[structopt(
-            value_name = "KEY",
-            help = "The key to search the value for"
-        )]
-        key: String
+        #[structopt(value_name = "KEY", help = "The key to search the value for")]
+        key: String,
     },
     #[structopt(name = "rm")]
     Rm {
-        #[structopt(
-            value_name = "KEY",
-            help = "The key to search the value for"
-        )]
-        key: String
-    }
+        #[structopt(value_name = "KEY", help = "The key to search the value for")]
+        key: String,
+    },
 }
 
-
 fn main() {
-
     let opt = Opt::from_args();
     println!("{:?}", opt);
 
     match Opt::from_args() {
-        Opt::Set { key, value } => {
-            println!("{:?}", value)
-        },
+        Opt::Set { key, value } => println!("{:?}", value),
         Opt::Rm { key } => {
             //...
         }
         _ => (),
     }
-
 
     /*
     let matches = App::new(env!("CARGO_PKG_NAME"))
