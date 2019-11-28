@@ -18,6 +18,10 @@ pub enum KvsError {
     KeyNotFound,
     #[fail(display = "An unknown error has occurred.")]
     UnknownError,
+    /// Unexpected command type error.
+    /// It indicated a corrupted log or a program bug.
+    #[fail(display = "Unexpected command type")]
+    UnexpectedCommandType,
 }
 
 impl From<io::Error> for KvsError {

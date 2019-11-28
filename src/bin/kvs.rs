@@ -3,11 +3,10 @@ extern crate clap;
 use clap::{App, Arg, SubCommand};
 use structopt::StructOpt;
 
-use std::path::PathBuf;
-use std::process::exit;
+
 use std::env;
 
-use kvs::{KvsError, Result, KvStore};
+use kvs::{Result, KvStore};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "git", about = "the stupid content tracker")]
@@ -33,21 +32,28 @@ enum Opt {
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
-    println!("{:?}", opt);
 
     match Opt::from_args() {
         Opt::Set { key, value } => {
             let mut store = KvStore::new(env::current_dir()?)?;
-            store.set(key, value)?;
+            store.set(key.to_string(), value.to_string())?;
             Ok(())
         },
         Opt::Rm { key } => {
             let mut store = KvStore::new(env::current_dir()?)?;
-            store.set("pepe".to_owned(), "pepote".to_owned())?;
-            store.rm(key)?;
+            store.rm(key.to_string())?;
             Ok(())
+        },
+        Opt::Get { key } => {
+            let mut store = KvStore::new(env::current_dir()?)?;
+            if let Some(value) = store.get(key.to_string())? {
+                println!("{}", value);
+            } else {
+                println!("Key not found");
+            }
+            
+            Ok(())            
         }
-        _ => Ok(()),
     }
 
     /*

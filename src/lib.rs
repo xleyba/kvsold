@@ -27,13 +27,14 @@ impl KvStore {
 
         let list = list_log_files(&path)?;
         let current_index = list.last().unwrap_or(&0) + 1;
-        let writer = new_log_file(&path, current_index)?;
         
         for &index in &list {
             let reader = BufReaderWithPos::new(File::open(path.join(format!("{}.log", index)))?)?;
             //uncompacted += load(gen, &mut reader, &mut index)?;
             readers.insert(index, reader);
         }
+
+        let writer = new_log_file(&path, current_index, &mut readers)?;
 
         Ok(
             KvStore {
@@ -76,6 +77,25 @@ impl KvStore {
         
     }
 
+    pub fn get(&mut self, key: String) -> Result<Option<String>> {
+
+        if let Some(cmd_pos) = self.store.get(&key) {
+            let reader = self
+                .readers
+                .get_mut(&cmd_pos.gen)
+                .expect("Cannot find log reader");
+            reader.seek(SeekFrom::Start(cmd_pos.pos))?;
+            let cmd_reader = reader.take(cmd_pos.len);
+            if let Command::Set { value, .. } = serde_json::from_reader(cmd_reader)? {
+                Ok(Some(value))
+            } else {
+                Err(KvsError::UnexpectedCommandType)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
 
 }
 
@@ -102,8 +122,8 @@ fn list_log_files(path: &PathBuf) -> Result<Vec<u64>> {
 }
 
 
-fn new_log_file(path: &Path, name: u64) -> Result<BufWriterWithPos<File>> {
-    let path = path.join(format!("{}.log", name));
+fn new_log_file(path: &Path, index: u64, readers: &mut HashMap<u64, BufReaderWithPos<File>>) -> Result<BufWriterWithPos<File>> {
+    let path = path.join(format!("{}.log", index));
 
     let writer = BufWriterWithPos::new(
         OpenOptions::new()
@@ -113,6 +133,7 @@ fn new_log_file(path: &Path, name: u64) -> Result<BufWriterWithPos<File>> {
         .open(&path)?,
     )?;
 
+    readers.insert(index, BufReaderWithPos::new(File::open(&path)?)?);
     Ok(writer)
 
 }
